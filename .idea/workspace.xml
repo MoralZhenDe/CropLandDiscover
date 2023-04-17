@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0d84a7f0-a4a2-4523-985e-bf603fc0b7e5" name="Changes" comment="init.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/zju/gislab/moral/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/zju/gislab/moral/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/FunctionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/FunctionTest.java" afterDir="false" />
-    </list>
+    <list default="true" id="0d84a7f0-a4a2-4523-985e-bf603fc0b7e5" name="Changes" comment="init." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,6 +25,7 @@
   </component>
   <component name="ProjectId" id="2OXa6n0F4J7vwnVcgp7CLxXgPjf" />
   <component name="ProjectLevelVcsManager">
+    <OptionsSetting value="false" id="Update" />
     <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectViewState">
@@ -82,7 +79,7 @@
       <option name="presentableId" value="Default" />
       <updated>1681709207954</updated>
       <workItem from="1681709209735" duration="15000" />
-      <workItem from="1681709368138" duration="991000" />
+      <workItem from="1681709368138" duration="1303000" />
     </task>
     <task id="LOCAL-00001" summary="init.">
       <created>1681709544263</created>
@@ -98,7 +95,14 @@
       <option name="project" value="LOCAL" />
       <updated>1681709562967</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="init.">
+      <created>1681710365308</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1681710365308</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
