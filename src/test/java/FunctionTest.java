@@ -14,10 +14,11 @@ import java.util.Date;
 import java.util.List;
 
 public class FunctionTest {
+
     @Test
     public void test_reproject(){
         String cpclDir = "C:\\Users\\moral\\Downloads\\cpc2021 (2)\\cpc2021\\wheat\\cpcwheat2021\\progress";
-        String targetDir = "C:\\Users\\moral\\Desktop\\博士论文\\CPCL\\2021\\reprojected\\";
+        String targetDir = "C:\\Users\\moral\\Desktop\\博士论文\\CPCL\\2021\\temp\\";
         List<String> cpclPaths = FileOperation.GetFilesBySuffix(cpclDir,"tif");
         for(String path : cpclPaths){
             File tmp = new File(path);
