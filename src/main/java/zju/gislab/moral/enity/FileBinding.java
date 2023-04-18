@@ -4,10 +4,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @NoArgsConstructor
-public class FileBinding {
+public class FileBinding implements Serializable {
     private int week;
     private String cpclPath;
     private String modisPath;

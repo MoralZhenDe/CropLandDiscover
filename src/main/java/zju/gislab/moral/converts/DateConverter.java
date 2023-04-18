@@ -6,9 +6,6 @@ import java.util.Date;
 public class DateConverter {
     /***
      * 根据nass week推断具体日期
-     * @param year
-     * @param week
-     * @return
      */
     public static Date convertNassWeek2Date(int year, int week)
     {

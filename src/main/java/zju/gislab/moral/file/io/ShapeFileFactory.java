@@ -5,15 +5,14 @@ import org.gdal.ogr.*;
 import zju.gislab.moral.enity.Feature;
 import zju.gislab.moral.enity.Field;
 import zju.gislab.moral.enity.enums.WE_FieldType;
-import zju.gislab.moral.file.io.enums.WE_RwPermission;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class ShapefileFactory {
+public class ShapeFileFactory {
 
-    private static final Logger logger = Logger.getLogger(ShapefileFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(ShapeFileFactory.class.getName());
     private DataSource ds = null;
 
     private void initialize() {
@@ -22,19 +21,18 @@ public class ShapefileFactory {
         gdal.SetConfigOption("SHAPE_ENCODING", "UTF8");
     }
 
-    public ShapefileFactory(String shpPath, WE_RwPermission rw) {
+    public ShapeFileFactory(String shpPath, boolean ifUpdate) {
         initialize();
-        this.ds = ogr.Open(shpPath, rw.ordinal());
+        this.ds = ogr.Open(shpPath, ifUpdate);
     }
 
-    public ShapefileFactory(String shpPath) {
+    public ShapeFileFactory(String shpPath) {
         initialize();
-        this.ds = ogr.Open(shpPath);
+        this.ds = ogr.Open(shpPath,false);
     }
 
     /***
      * 获取shapefile文件信息
-     * @return
      */
     public String getFileInfo() {
         int LayerCount = ds.GetLayerCount();
@@ -109,9 +107,6 @@ public class ShapefileFactory {
 
     /***
      * 指定字段index，按索引位置更新单个Feature
-     * @param layerIndex
-     * @param featureIndex
-     * @return
      */
     public boolean updateFeatureByIndex(int layerIndex, long featureIndex, int fieldIndex, Object fieldValue) {
         boolean ifUpdated = true;
@@ -162,9 +157,6 @@ public class ShapefileFactory {
 
     /***
      * 按索引位置获取单个Feature
-     * @param layerIndex
-     * @param featureIndex
-     * @return
      */
     public Feature getFeatureByIndex(int layerIndex, long featureIndex) {
         org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);
@@ -192,9 +184,6 @@ public class ShapefileFactory {
 
     /***
      * 按index，获取geometry
-     * @param layerIndex
-     * @param featureIndex
-     * @return
      */
     public Geometry getGeomByIndex(int layerIndex, long featureIndex) {
         org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);
@@ -206,9 +195,26 @@ public class ShapefileFactory {
     }
 
     /***
+     *获取单要素的指定属性值
+     */
+    public Field getFieldByIndex(int layerIndex, long featureIndex,String fieldName) {
+        org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);
+        org.gdal.ogr.Feature fe = layer.GetFeature(featureIndex);
+        int fi = fe.GetDefnRef().GetFieldIndex(fieldName);
+            FieldDefn fdn = fe.GetDefnRef().GetFieldDefn(fi);
+            Field fie = new Field();
+            fie.setName(fdn.GetName());
+            fie.setType(fdn.GetTypeName());
+            fie.setValue(CatchFieldValue(fe, fi, fdn.GetTypeName()));
+        return fie;
+    }
+
+    public Field getFieldByIndex(long featureIndex,String fieldName) {
+        return getFieldByIndex(0, featureIndex,fieldName);
+    }
+
+    /***
      * 获取Features总数
-     * @param layerIndex
-     * @return
      */
     public long getFeatureCount(int layerIndex) {
         org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);
@@ -221,8 +227,6 @@ public class ShapefileFactory {
 
     /***
      * 获取字段名以及字段类型
-     * @param layerIndex
-     * @return
      */
     public String[] getFieldNames(int layerIndex) {
         org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);
@@ -243,8 +247,6 @@ public class ShapefileFactory {
 
     /***
      * 全量读取Features至内存
-     * @param layerIndex
-     * @return
      */
     public List<Feature> getFeatures(int layerIndex) {
         org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);

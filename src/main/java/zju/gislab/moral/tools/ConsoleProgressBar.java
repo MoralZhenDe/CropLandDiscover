@@ -1,6 +1,7 @@
 package zju.gislab.moral.tools;
 
 import java.text.DecimalFormat;
+import java.time.Instant;
 
 public class ConsoleProgressBar {
     /**
@@ -76,6 +77,8 @@ public class ConsoleProgressBar {
      * 完成后换行
      */
     private void afterComplete() {
+        System.out.print('\n');
+        System.out.print("END AT:"+Instant.now());
         System.out.print('\n');
     }
 
