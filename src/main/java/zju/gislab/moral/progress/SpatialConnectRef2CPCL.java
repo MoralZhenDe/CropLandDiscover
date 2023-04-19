@@ -54,12 +54,12 @@ public class SpatialConnectRef2CPCL {
                     tmp.append("0.875").append(",");
                 else
                     tmp.append("1").append(",");
-                tmp.append(pIndex).append(",");
+                tmp.append(pIndex);
                 for(int bandIndex = 1;bandIndex<=7;bandIndex++){
                     double[] value = new double[1];
                     if (imf.getValueBylonlat(bandIndex, geo.GetX(), geo.GetY(), value)) {
                         if(value[0]>0){
-                            tmp.append(value[0]);
+                            tmp.append(",").append(value[0]);
                         }
                     }
                 }
@@ -71,6 +71,7 @@ public class SpatialConnectRef2CPCL {
         }
         writeText.close();
         sff.close();
-        logger.info("*************************************MODIS DONE*************************************");
+        logger.info("*********Tmp Format: id,lon,lat,week,rate,progressIndex,b1,b2,b3,b4,b5,b6,b7*********");
+        logger.info("************************************* MODIS DONE *************************************");
     }
 }

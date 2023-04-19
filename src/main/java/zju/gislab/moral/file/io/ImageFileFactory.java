@@ -50,8 +50,16 @@ public class ImageFileFactory {
         Band band = this.dataset.GetRasterBand(bandIndex);
         int[] rcIndex = geo2ImageXY(dataset.GetGeoTransform(), lon, lat);
 
-        if (rcIndex[0] > 0 & rcIndex[1] > 0 & rcIndex[0] < dataset.GetRasterXSize() & rcIndex[1] < dataset.GetRasterYSize()) {
-            band.ReadRaster(rcIndex[0], rcIndex[1], 1, 1, val);
+        return getValueByRowCol(bandIndex,rcIndex[0],rcIndex[1],val);
+    }
+
+    /***
+     * 根据行列号，波段号取像元值
+     */
+    public boolean getValueByRowCol(int bandIndex, int row, int col, double[] val) {
+        Band band = this.dataset.GetRasterBand(bandIndex);
+        if (row > 0 & col > 0 & row < dataset.GetRasterXSize() & col < dataset.GetRasterYSize()) {
+            band.ReadRaster(row, col, 1, 1, val);
             return true;
         } else {
             return false;
@@ -71,6 +79,13 @@ public class ImageFileFactory {
         WarpOptions warpOptions = new WarpOptions(options);
         Dataset[] src_array = {dataset};
         gdal.Warp(targetPath, src_array, warpOptions);
+    }
+
+    /***
+     * 获取影像行列总数
+     */
+    public int[] getImageSize(){
+        return new int[]{this.dataset.GetRasterXSize(),this.dataset.GetRasterYSize()};
     }
 
     public void close() {

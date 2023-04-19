@@ -17,9 +17,8 @@ public class FunctionTest {
 
     @Test
     public void txtPreview(){
-        String cpclDir = "C:\\Users\\moral\\Desktop\\博士论文\\_INPUT\\wheat-2021.rdx";
+        String cpclDir = "C:\\Users\\moral\\Desktop\\博士论文\\_INPUT\\ratedFiles\\1.rdx";
         TXTPreviewer.fromHead(cpclDir,100);
-
     }
 
     @Test
@@ -112,8 +111,8 @@ public class FunctionTest {
     public void test_MatchWeek2Date() {
         Date date = DateConverter.convertNassWeek2Date(2021,13);
         System.out.println(date);
-        Date date2 = DateConverter.convertNassWeek2Date(2021,47);
-        System.out.println(date2);
+        int week = DateConverter.convertDate2NassWeek(2021,9,19);
+        System.out.println(week);
     }
     @Test
     public void test_MoveUnZipModisFiles() throws IOException {

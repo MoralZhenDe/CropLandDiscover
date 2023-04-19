@@ -11,7 +11,6 @@ public class TXTPreviewer {
             for (int i = 0; i < n; i++) {
                 System.out.println(bufferedReader.readLine());
             }
-            bufferedReader.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

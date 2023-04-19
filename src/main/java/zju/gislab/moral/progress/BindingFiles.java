@@ -28,7 +28,7 @@ public class BindingFiles {
         //save fileBindings
         SystemFileFactory.saveFileBinding(fileBindings,fileBindsPath);
 
-        logger.info("*************************************CHECK DONE*************************************");
+        logger.info("************************************* CHECK DONE *************************************");
     }
 
 
