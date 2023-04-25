@@ -8,12 +8,15 @@ import zju.gislab.moral.file.io.SystemFileFactory;
 import zju.gislab.moral.tools.ConsoleProgressBar;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.logging.Logger;
 
-public class SpatialConnectRef2CPCL {
+/***
+ * 根据空间坐标为cdl点数据匹配modis各波段反射率，生成rdx数据；
+ * id,lon,lat,week,rate,progressIndex,b1,b2,b3,b4,b5,b6,b7
+ */
+public class SpatialConnectModis2CPCL {
     private static final String fieldPrefix = "_W";
-    private static final Logger logger = Logger.getLogger(SpatialConnectRef2CPCL.class.getName());
+    private static final Logger logger = Logger.getLogger(SpatialConnectModis2CPCL.class.getName());
 
     public static void run(String cdlShpPath,String csvPath, String fileBindsPath) throws IOException {
         FileBinding[] fileBindings = SystemFileFactory.readFileBinding(fileBindsPath);

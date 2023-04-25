@@ -6,6 +6,10 @@ import java.io.*;
 import java.time.Instant;
 import java.util.logging.Logger;
 
+/***
+ * 根据生长周期，分割input数据，0-7对应8个生长阶段；
+ * todo 抛弃按rate均匀划分的方案，参考作物自身生长规律进行划分；
+ */
 public class SplitInputFileByRate {
     private static final Logger logger = Logger.getLogger(SplitInputFileByRate.class.getName());
 

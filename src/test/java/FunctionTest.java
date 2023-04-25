@@ -18,9 +18,18 @@ public class FunctionTest {
     @Test
     public void txtPreview(){
         String cpclDir = "C:\\Users\\moral\\Desktop\\博士论文\\_INPUT\\ratedFiles\\1.rdx";
-        TXTPreviewer.fromHead(cpclDir,100);
+        TXTPreviewer.fromHead(cpclDir,10);
+        TXTPreviewer.fromEnd(cpclDir,10);
     }
-
+    @Test
+    public void test_cutByMask(){
+        String sourceImg = "C:\\Users\\moral\\Desktop\\博士论文\\MODIS\\2021\\MODIS-USA-2021-09-19.tif";
+        String targetImg = "C:\\Users\\moral\\Desktop\\博士论文\\_TEST\\result\\2021\\MODIS-USA-2021-09-19-masked.tif";
+        String mask = "C:\\Users\\moral\\Desktop\\博士论文\\_TEST\\mask\\Mask.shp";
+        ImageFileFactory imf = new ImageFileFactory(sourceImg);
+        imf.clipByMask(targetImg,mask);
+        imf.close();
+    }
     @Test
     public void test_reproject(){
         String cpclDir = "C:\\Users\\moral\\Downloads\\cpc2021 (2)\\cpc2021\\wheat\\cpcwheat2021\\progress";

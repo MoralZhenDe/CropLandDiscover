@@ -9,6 +9,9 @@ import zju.gislab.moral.tools.ConsoleProgressBar;
 
 import java.util.logging.Logger;
 
+/***
+ * 根据空间坐标为cdl点数据赋予cpcl数据；
+ */
 public class SpatialConnectCPCL2CDL {
     private static final Logger logger = Logger.getLogger(SpatialConnectCPCL2CDL.class.getName());
     private static final String fieldPrefix = "_W";

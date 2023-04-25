@@ -1,8 +1,7 @@
 package zju.gislab.moral;
 
-import zju.gislab.moral.progress.BindingFiles;
-import zju.gislab.moral.progress.SpatialConnectCPCL2CDL;
-import zju.gislab.moral.progress.SpatialConnectRef2CPCL;
+import zju.gislab.moral.progress.ExtractTestData;
+import zju.gislab.moral.progress.SpatialConnectModis2CPCL;
 import zju.gislab.moral.progress.SplitInputFileByRate;
 
 import java.io.IOException;
@@ -18,12 +17,17 @@ public class Main {
         String inputPath = "C:\\Users\\moral\\Desktop\\博士论文\\_INPUT\\wheat-2021.rdx";
         String ratedFileDir = "C:\\Users\\moral\\Desktop\\博士论文\\_INPUT\\ratedFiles\\";
 
+        String testImgPath = "C:\\Users\\moral\\Desktop\\博士论文\\MODIS\\2021\\MODIS-USA-2021-09-12.tif";
+        String maskPath = "C:\\Users\\moral\\Desktop\\博士论文\\_TEST\\mask\\Mask.shp";
+        String testResultDir = "C:\\Users\\moral\\Desktop\\博士论文\\_TEST\\result\\2021";
 //        BindingFiles.run(cdlPath,modisDir,cpclDir,fileBindingPath);
 //        SpatialConnectCPCL2CDL.run(cdlPath,fileBindingPath);
-        SpatialConnectRef2CPCL.run(cdlPath,inputPath,fileBindingPath);
+//        SpatialConnectModis2CPCL.run(cdlPath,inputPath,fileBindingPath);
 
-        SplitInputFileByRate rfIo = new SplitInputFileByRate(ratedFileDir,8);
-        rfIo.run(inputPath);
+//        SplitInputFileByRate rfIo = new SplitInputFileByRate(ratedFileDir,8);
+//        rfIo.run(inputPath);
+
+        ExtractTestData.run(testImgPath, maskPath, testResultDir);
 
     }
 

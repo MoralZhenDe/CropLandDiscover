@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/***
+ * 检查modis数据，cpcl数据以及矢量数据字段信息的完整性。
+ * 生成三份数据的绑定关系序列化文件
+ */
 public class BindingFiles {
     private static final Logger logger = Logger.getLogger(BindingFiles.class.getName());
 
