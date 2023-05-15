@@ -12,7 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
-      <library name="Maven: org.gdal:gdal:3.4.3">
+      <library name="Maven: org.gdal:gdal:3.6.3">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/src/main/resources/lib/gdal.jar!/" />
         </CLASSES>

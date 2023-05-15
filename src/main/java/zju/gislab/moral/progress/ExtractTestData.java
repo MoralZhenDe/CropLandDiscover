@@ -1,12 +1,8 @@
 package zju.gislab.moral.progress;
 
-import zju.gislab.moral.enity.Feature;
 import zju.gislab.moral.file.io.ImageFileFactory;
-import zju.gislab.moral.file.io.SystemFileFactory;
-
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.logging.Logger;
 
 /***

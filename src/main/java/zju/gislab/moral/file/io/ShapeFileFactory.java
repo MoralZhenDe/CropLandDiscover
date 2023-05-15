@@ -37,8 +37,12 @@ public class ShapeFileFactory {
     public String getFileInfo() {
         int LayerCount = ds.GetLayerCount();
         StringBuilder infoStr = new StringBuilder("File: " + ds.getName());
+
         infoStr.append("\r\n");
         infoStr.append(String.format("LayerCount: %d;", LayerCount));
+        infoStr.append("\r\n");
+        infoStr.append("PROJ: ").append(ds.GetLayer(0).GetSpatialRef().GetName());
+
         for (int i = 0; i < LayerCount; i++) {
             infoStr.append("\r\n");
             infoStr.append(String.format("Layer_" + i + "_Name: " + ds.GetLayer(i).GetName()));

@@ -1,3 +1,4 @@
+import org.gdal.gdal.RasterizeOptions;
 import org.junit.Test;
 import zju.gislab.moral.converts.DateConverter;
 import zju.gislab.moral.enity.Feature;
@@ -21,11 +22,21 @@ public class FunctionTest {
         TXTPreviewer.fromHead(cpclDir,10);
         TXTPreviewer.fromEnd(cpclDir,10);
     }
+
+    @Test
+    public void test_MetaRpc() throws IOException {
+        String sourceImg = "C:\\Users\\moral\\Desktop\\XYC\\gdal_rpc_test\\noRPC.tiff";
+        ImageFileFactory imf = new ImageFileFactory(sourceImg);
+        imf.getRpc("C:\\Users\\moral\\Desktop\\XYC\\gdal_rpc_test\\noRPC.rpb");
+    }
+
+
     @Test
     public void test_cutByMask(){
-        String sourceImg = "C:\\Users\\moral\\Desktop\\博士论文\\MODIS\\2021\\MODIS-USA-2021-09-19.tif";
-        String targetImg = "C:\\Users\\moral\\Desktop\\博士论文\\_TEST\\result\\2021\\MODIS-USA-2021-09-19-masked.tif";
-        String mask = "C:\\Users\\moral\\Desktop\\博士论文\\_TEST\\mask\\Mask.shp";
+        String sourceImg = "C:\\Users\\moral\\Desktop\\XYC\\gdal_rpc_test\\result\\renew.tif";
+        String mask = "C:\\Users\\moral\\Desktop\\XYC\\gdal_rpc_test\\aoi9.shp";
+        String targetImg = "C:\\Users\\moral\\Desktop\\XYC\\gdal_rpc_test\\result\\_ByQGIS.tif";
+
         ImageFileFactory imf = new ImageFileFactory(sourceImg);
         imf.clipByMask(targetImg,mask);
         imf.close();
@@ -54,7 +65,7 @@ public class FunctionTest {
     }
     @Test
     public void test_imgInfo(){
-        String imgFilePath = "C:\\Users\\moral\\Desktop\\博士论文\\CPCL\\2021\\reprojected\\wheatProg21w32.tif";
+        String imgFilePath = "C:\\Users\\moral\\Desktop\\XYC\\gdal_rpc_test\\noRPC.tiff";
         ImageFileFactory iio = new ImageFileFactory(imgFilePath);
         System.out.println(iio.getFileInfo());
     }
@@ -109,7 +120,7 @@ public class FunctionTest {
     }
     @Test
     public void test_GetShapeFileInfo(){
-        String shpFilePath = "C:\\Users\\moral\\Desktop\\博士论文\\CDL\\2021\\cdl_ww_2021.shp";
+        String shpFilePath = "C:\\Users\\moral\\Desktop\\XYC\\aoi9.shp";
         ShapeFileFactory sio = new ShapeFileFactory(shpFilePath);
         System.out.println(sio.getFileInfo());
         for(String fdn:sio.getFieldNames()){
