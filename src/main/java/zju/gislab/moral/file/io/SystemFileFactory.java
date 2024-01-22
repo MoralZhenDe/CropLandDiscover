@@ -2,10 +2,7 @@ package zju.gislab.moral.file.io;
 
 import zju.gislab.moral.enity.FileBinding;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.logging.Logger;
@@ -37,6 +34,22 @@ public class SystemFileFactory {
         } catch (Exception e) {
             logger.warning("文件绑定关系读取失败："+e.getMessage());
             return null;
+        }
+    }
+
+    public static void exportHistogram(int[] histogramData, String filePath) {
+        try (FileWriter writer = new FileWriter(filePath)) {
+            // 写入 CSV 文件的头部
+            writer.append("Pixel Value,Frequency\n");
+
+            // 写入直方图数据
+            for (int i = 0; i < histogramData.length; i++) {
+                writer.append(i + "," + histogramData[i] + "\n");
+            }
+
+            System.out.println(filePath + " - export successful!");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

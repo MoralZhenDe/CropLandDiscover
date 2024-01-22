@@ -1,11 +1,19 @@
 package zju.gislab.moral.file.io;
 
+import javafx.geometry.Point2D;
 import org.gdal.gdal.gdal;
 import org.gdal.ogr.*;
+import org.gdal.osr.SpatialReference;
 import zju.gislab.moral.enity.Feature;
 import zju.gislab.moral.enity.Field;
 import zju.gislab.moral.enity.enums.WE_FieldType;
 
+import java.beans.Encoder;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.sql.Time;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -14,21 +22,49 @@ public class ShapeFileFactory {
 
     private static final Logger logger = Logger.getLogger(ShapeFileFactory.class.getName());
     private DataSource ds = null;
+    private String filePath = "";
 
-    private void initialize() {
+    private void initialize(String shpPath) {
         ogr.RegisterAll();
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
         gdal.SetConfigOption("SHAPE_ENCODING", "UTF8");
+
+        this.filePath = shpPath;
     }
 
     public ShapeFileFactory(String shpPath, boolean ifUpdate) {
-        initialize();
+        initialize(shpPath);
         this.ds = ogr.Open(shpPath, ifUpdate);
     }
 
     public ShapeFileFactory(String shpPath) {
-        initialize();
-        this.ds = ogr.Open(shpPath,false);
+        initialize(shpPath);
+        this.ds = ogr.Open(shpPath, false);
+    }
+
+    public ShapeFileFactory(String workSpacePath, double[] extent, SpatialReference srs) throws UnsupportedEncodingException {
+        String shpPath = workSpacePath+"mask.shp";
+        initialize(shpPath);
+        this.ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(shpPath);
+
+        Layer layer = ds.CreateLayer("mask", srs, ogr.wkbPolygon);
+        FeatureDefn featureDefn = layer.GetLayerDefn();
+        org.gdal.ogr.Feature feature = new org.gdal.ogr.Feature(featureDefn);
+
+        Geometry lr = new Geometry(ogr.wkbLinearRing);
+        lr.AssignSpatialReference(srs);
+        lr.AddPoint_2D(extent[0], extent[2]);
+        lr.AddPoint_2D(extent[1], extent[2]);
+        lr.AddPoint_2D(extent[1], extent[3]);
+        lr.AddPoint_2D(extent[0], extent[3]);
+        lr.AddPoint_2D(extent[0], extent[2]);
+
+        Geometry polygon = new Geometry(ogr.wkbPolygon);
+        polygon.AddGeometry(lr);
+        feature.SetGeometry(polygon);
+
+        layer.CreateFeature(feature);
+        this.ds.FlushCache();
     }
 
     /***
@@ -194,6 +230,7 @@ public class ShapeFileFactory {
         org.gdal.ogr.Feature fe = layer.GetFeature(featureIndex);
         return fe.GetGeometryRef();
     }
+
     public Geometry getGeomByIndex(long featureIndex) {
         return getGeomByIndex(0, featureIndex);
     }
@@ -201,20 +238,20 @@ public class ShapeFileFactory {
     /***
      *获取单要素的指定属性值
      */
-    public Field getFieldByIndex(int layerIndex, long featureIndex,String fieldName) {
+    public Field getFieldByIndex(int layerIndex, long featureIndex, String fieldName) {
         org.gdal.ogr.Layer layer = ds.GetLayer(layerIndex);
         org.gdal.ogr.Feature fe = layer.GetFeature(featureIndex);
         int fi = fe.GetDefnRef().GetFieldIndex(fieldName);
-            FieldDefn fdn = fe.GetDefnRef().GetFieldDefn(fi);
-            Field fie = new Field();
-            fie.setName(fdn.GetName());
-            fie.setType(fdn.GetTypeName());
-            fie.setValue(CatchFieldValue(fe, fi, fdn.GetTypeName()));
+        FieldDefn fdn = fe.GetDefnRef().GetFieldDefn(fi);
+        Field fie = new Field();
+        fie.setName(fdn.GetName());
+        fie.setType(fdn.GetTypeName());
+        fie.setValue(CatchFieldValue(fe, fi, fdn.GetTypeName()));
         return fie;
     }
 
-    public Field getFieldByIndex(long featureIndex,String fieldName) {
-        return getFieldByIndex(0, featureIndex,fieldName);
+    public Field getFieldByIndex(long featureIndex, String fieldName) {
+        return getFieldByIndex(0, featureIndex, fieldName);
     }
 
     /***
@@ -277,7 +314,7 @@ public class ShapeFileFactory {
     }
 
     public void close() {
-        this.ds =null;
+        this.ds = null;
     }
 
     public List<Feature> getFeatures() {
@@ -293,6 +330,10 @@ public class ShapeFileFactory {
             default:
                 return feature.GetFieldAsString(f_index);
         }
+    }
+
+    public String getFilePath() {
+        return this.filePath;
     }
 
 }

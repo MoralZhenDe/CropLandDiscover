@@ -1,10 +1,7 @@
 package zju.gislab.moral.file.io;
 
-import com.sun.javafx.binding.StringFormatter;
-import org.gdal.gdal.Band;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.WarpOptions;
-import org.gdal.gdal.gdal;
+import org.gdal.gdal.*;
+import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.SpatialReference;
 import zju.gislab.moral.tools.ConsoleProgressBar;
 
@@ -15,18 +12,41 @@ import java.util.logging.Logger;
 public class ImageFileFactory {
     private static final Logger logger = Logger.getLogger(ImageFileFactory.class.getName());
     private Dataset dataset = null;
+    private String imgPath = "";
 
-    private void initialize() {
+    public String getImgPath() {
+        return this.imgPath;
+    }
+
+    public String getImgName() {
+        return new File(this.imgPath.trim()).getName();
+    }
+
+    private void initialize(String imgPath) {
         gdal.AllRegister();
+        this.imgPath = imgPath;
     }
 
     public ImageFileFactory(String imgPath) {
-        initialize();
-        this.dataset = gdal.Open(imgPath, 1);
+        initialize(imgPath);
+        this.dataset = gdal.Open(imgPath, gdalconstConstants.GA_Update);
     }
 
+    public String reFormate(String targetType) {
+        String targetPath = this.imgPath.substring(0, this.imgPath.lastIndexOf(".")) + targetType;
+        Vector<String> options = new Vector<>();
+        options.add("-of");
+        options.add("VRT");
+        WarpOptions warpOptions = new WarpOptions(options);
+        Dataset[] src_array = {dataset};
+        gdal.Warp(targetPath, src_array, warpOptions);
+        logger.info("\"************************************* reFormate DONE *************************************\"");
+        return targetPath;
+    }
+
+    //TODO GF001&006 get wrong proj info, make the .rpb file necessary
     public void getRpc(String rpbPath) throws IOException {
-        Hashtable<String,String> tb = this.dataset.GetMetadata_Dict("RPC");
+        Hashtable<String, String> tb = this.dataset.GetMetadata_Dict("RPC");
         Set<String> set = tb.keySet();
         System.out.println("**********************************FROM Metadata**********************************");
         for (String key : set) {
@@ -39,6 +59,55 @@ public class ImageFileFactory {
         });
     }
 
+    public int[] getHistogram(int bandIndex, double min, double max, int bukNumb) {
+        int[] b = new int[bukNumb];
+        this.dataset.GetRasterBand(bandIndex).GetHistogram(min, max, b);
+        return b;
+    }
+
+    public double[][] getStatistics(int bandIndex) {
+        double[] min = new double[1];
+        double[] max = new double[1];
+        double[] mean = new double[1];
+        double[] stddev = new double[1];
+        this.dataset.GetRasterBand(bandIndex).ComputeStatistics(false, min, max, mean, stddev);
+        return new double[][]{min, max, mean, stddev};
+    }
+
+    /***
+     * 获取四至
+     * @return xMin xMax yMin yMax
+     * @throws IOException
+     */
+    public double[] getExtent() throws IOException {
+        int rX = dataset.GetRasterXSize();
+        int rY = dataset.GetRasterYSize();
+        double[] transform = dataset.GetGeoTransform();
+
+        double Xp = transform[0] + rX * transform[1] + rX * transform[2];
+        double Yp = transform[3] + rY * transform[4] + rY * transform[5];
+
+        return new double[]{transform[0], Xp, Yp, transform[3]};
+    }
+
+    /***
+     * Add band from another img, Return new file.
+     */
+    public String appendBand(String sourceImg, int sourceBandIndex) {
+        String newFilePath = sourceImg.substring(0, sourceImg.lastIndexOf(".")) + ".tif";
+        Dataset source = gdal.Open(sourceImg, 1);
+        Band band = source.GetRasterBand(sourceBandIndex);
+        int width = source.GetRasterXSize();
+        int height = source.GetRasterYSize();
+        byte[] tmp = new byte[width * height];
+        band.ReadRaster(0, 0, width, height, tmp);
+        this.dataset.AddBand(this.dataset.GetRasterBand(1).GetRasterDataType());
+        int targetIndex = this.dataset.GetRasterCount();
+        Dataset result = gdal.GetDriverByName("GTiff").CreateCopy(newFilePath, this.dataset);
+        result.GetRasterBand(targetIndex).WriteRaster(0, 0, width, height, tmp);
+        result.FlushCache();
+        return newFilePath;
+    }
 
     /***
      * 获取文件元数据
@@ -51,11 +120,14 @@ public class ImageFileFactory {
         return "Origin  X: " + geotransform[0] + "\r\n" + "Origin  Y: " + geotransform[3] + "\r\n" + "X rotate: " + geotransform[2] + "\r\n" + "Y rotate: " + geotransform[4] + "\r\n" + "Band count: " + dataset.getRasterCount() + "\r\n" + "Cell Size X: " + geotransform[1] + "\r\n" + "Cell Size Y: " + geotransform[5] + "\r\n" + "Cell Value Type: " + gdal.GetDataTypeName(bd.getDataType()) + "\r\n" + "Band Size X: " + dataset.getRasterXSize() + "\r\n" + "Band Size Y: " + dataset.getRasterYSize() + "\r\n" + "Image Proj: " + dataset.GetProjection() + "\r\n";
     }
 
+    public SpatialReference getSRS() {
+        return dataset.GetSpatialRef();
+    }
+
     /***
      * 根据坐标位置，波段号获取像元值
      */
     public boolean getValueBylonlat(int bandIndex, double lon, double lat, double[] val) {
-        Band band = this.dataset.GetRasterBand(bandIndex);
         int[] rcIndex = geo2ImageXY(dataset.GetGeoTransform(), lon, lat);
         return getValueByRowCol(bandIndex, rcIndex[0], rcIndex[1], val);
     }
@@ -89,6 +161,19 @@ public class ImageFileFactory {
         logger.info("\"************************************* PROJECT DONE *************************************\"");
     }
 
+    public void Mosaic(List<String> filePaths, String targetPath) {
+        Vector<String> options = new Vector<>();
+        options.add("-r");
+        options.add("max");
+        WarpOptions warpOptions = new WarpOptions(options);
+        Dataset[] src_array = new Dataset[filePaths.size()];
+        for (int i = 0; i < filePaths.size(); i++) {
+            src_array[i] = gdal.Open(filePaths.get(i), gdalconstConstants.GA_ReadOnly);
+        }
+        gdal.Warp(targetPath, src_array, warpOptions);
+        logger.info("\"************************************* PROJECT DONE *************************************\"");
+    }
+
     /***
      * 按掩膜裁切影像
      * @param targetPath
@@ -107,7 +192,29 @@ public class ImageFileFactory {
         WarpOptions warpOptions = new WarpOptions(options);
         Dataset[] src_array = {dataset};
         gdal.Warp(targetPath, src_array, warpOptions);
-        logger.info("\"************************************* CUT DONE *************************************\"");
+        logger.info(targetPath + "\"************************************* CUT DONE *\"");
+    }
+
+    /***
+     *
+     * @param targetPath
+     * @param maskPath
+     * @param xSize
+     * @param ySize
+     */
+    public void resampleByTSwithMask(String targetPath, String maskPath, int xSize, int ySize) {
+        Vector<String> options = new Vector<>();
+        options.add("-cutline");
+        options.add(maskPath);
+        options.add("-crop_to_cutline");
+        options.add("true");
+        options.add("-ts");
+        options.add(String.valueOf(xSize));
+        options.add(String.valueOf(ySize));
+        WarpOptions warpOptions = new WarpOptions(options);
+        Dataset[] src_array = {dataset};
+        gdal.Warp(targetPath, src_array, warpOptions);
+        logger.info(targetPath + "\"************************************* CUT DONE *\"");
     }
 
     /***
@@ -124,11 +231,12 @@ public class ImageFileFactory {
     public void convert2CSV(String csvPath) {
         int BATCHSIZE = 100000;
         int count = 0;
-        ConsoleProgressBar cpb = new ConsoleProgressBar("Test data EX", (long) (dataset.GetRasterYSize() - 1) * (dataset.GetRasterYSize() - 1), '#');
+        ConsoleProgressBar cpb = new ConsoleProgressBar("Data EX", (long) (dataset.GetRasterYSize() - 1) * (dataset.GetRasterYSize() - 1), '#');
+        long total = 0;
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(csvPath))) {
             for (int row = 0; row < this.dataset.GetRasterYSize(); row++) {
                 for (int col = 0; col < this.dataset.GetRasterXSize(); col++) {
-                    cpb.show(row * col);
+                    cpb.show(total++);
                     double[] lonLat = imageXY2Geo(dataset.GetGeoTransform(), row, col);
                     StringBuilder sbr = new StringBuilder(row + "_" + col);
                     sbr.append(",").append(lonLat[0]).append(",").append(lonLat[1]);
@@ -146,6 +254,44 @@ public class ImageFileFactory {
                     }
                 }
             }
+        } catch (Exception e) {
+            logger.warning("文件异常：" + e.getMessage());
+        }
+    }
+
+    public void convert2CSVWithCDL(String csvPath,String cdlPath) {
+        ImageFileFactory cdl = new ImageFileFactory(cdlPath);
+        int BATCHSIZE = 1000000;
+        int count = 0;
+        ConsoleProgressBar cpb = new ConsoleProgressBar("Data EX", (long) (dataset.GetRasterYSize() - 1) * (dataset.GetRasterYSize() - 1), '#');
+        long total = 0;
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(csvPath))) {
+            for (int row = 0; row < this.dataset.GetRasterYSize(); row++) {
+                for (int col = 0; col < this.dataset.GetRasterXSize(); col++) {
+                    total++;
+                    double[] lonLat = imageXY2Geo(dataset.GetGeoTransform(), row, col);
+                    StringBuilder sbr = new StringBuilder(row + "_" + col);
+                    sbr.append(",").append(lonLat[0]).append(",").append(lonLat[1]);
+                    for (int bandIndex = 1; bandIndex <= dataset.getRasterCount(); bandIndex++) {
+                        double[] val = new double[1];
+                        this.dataset.GetRasterBand(bandIndex).ReadRaster(col, row, 1, 1, val);
+                        sbr.append(",").append(val[0]);
+                    }
+                    double[] cdlVal = new double[1];
+                    cdl.getValueBylonlat(1,lonLat[0],lonLat[1],cdlVal);
+                    sbr.append(",").append(cdlVal[0]);
+                    bufferedWriter.write(sbr.toString());
+                    bufferedWriter.newLine();
+                    count++;
+                    if (count > BATCHSIZE) {
+                        cpb.show(total);
+                        count = 0;
+                        bufferedWriter.flush();
+                    }
+                }
+            }
+            cpb.show(total);
+            bufferedWriter.close();
         } catch (Exception e) {
             logger.warning("文件异常：" + e.getMessage());
         }

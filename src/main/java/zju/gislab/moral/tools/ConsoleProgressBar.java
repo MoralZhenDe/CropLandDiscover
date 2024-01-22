@@ -34,7 +34,7 @@ public class ConsoleProgressBar {
     /**
      * 显示进度条
      */
-    public void show(int value) {
+    public void show(long value) {
         //if (value < 0 || value > 100) {
         //    return;
         //}
