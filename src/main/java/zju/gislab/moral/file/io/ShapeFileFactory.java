@@ -9,6 +9,7 @@ import zju.gislab.moral.enity.Field;
 import zju.gislab.moral.enity.enums.WE_FieldType;
 
 import java.beans.Encoder;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +33,10 @@ public class ShapeFileFactory {
         this.filePath = shpPath;
     }
 
+    public ShapeFileFactory() {
+        initialize("null");
+    }
+
     public ShapeFileFactory(String shpPath, boolean ifUpdate) {
         initialize(shpPath);
         this.ds = ogr.Open(shpPath, ifUpdate);
@@ -48,6 +53,35 @@ public class ShapeFileFactory {
         this.ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(shpPath);
 
         Layer layer = ds.CreateLayer("mask", srs, ogr.wkbPolygon);
+        FeatureDefn featureDefn = layer.GetLayerDefn();
+        org.gdal.ogr.Feature feature = new org.gdal.ogr.Feature(featureDefn);
+
+        Geometry lr = new Geometry(ogr.wkbLinearRing);
+        lr.AssignSpatialReference(srs);
+        lr.AddPoint_2D(extent[0], extent[2]);
+        lr.AddPoint_2D(extent[1], extent[2]);
+        lr.AddPoint_2D(extent[1], extent[3]);
+        lr.AddPoint_2D(extent[0], extent[3]);
+        lr.AddPoint_2D(extent[0], extent[2]);
+
+        Geometry polygon = new Geometry(ogr.wkbPolygon);
+        polygon.AddGeometry(lr);
+        feature.SetGeometry(polygon);
+
+        layer.CreateFeature(feature);
+        this.ds.FlushCache();
+    }
+
+    public void createFromIMG(String imgPath) throws IOException {
+        String shpPath = imgPath.substring(0,imgPath.lastIndexOf("."))+".shp";
+        this.ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(shpPath);
+        this.filePath = shpPath;
+
+        ImageFileFactory imf = new ImageFileFactory(imgPath);
+        SpatialReference srs = imf.getSRS();
+        double[] extent = imf.getExtent();
+        imf.close();
+        Layer layer = ds.CreateLayer("mask",srs , ogr.wkbPolygon);
         FeatureDefn featureDefn = layer.GetLayerDefn();
         org.gdal.ogr.Feature feature = new org.gdal.ogr.Feature(featureDefn);
 

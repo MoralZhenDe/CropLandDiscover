@@ -34,7 +34,7 @@ public class Main {
         File tmpSpaceFile = new File(tmpSpace);
         tmpSpaceFile.mkdir();
 
-        String cpField = workspacePath + "CropFields\\russia_2018.tif";
+        String cpField = workspacePath + "CropFields\\russia_2019.tif";
         String S2 = workspacePath + "S2\\S2_Russia_2019\\S2_Russia_2019.tif";
 
         ImageFileFactory s2Imf = new ImageFileFactory(S2);

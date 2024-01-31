@@ -2,6 +2,10 @@ package zju.gislab.moral.file.io;
 
 import org.gdal.gdal.*;
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.ogr.DataSource;
+import org.gdal.ogr.FieldDefn;
+import org.gdal.ogr.Layer;
+import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
 import zju.gislab.moral.tools.ConsoleProgressBar;
 
@@ -30,6 +34,69 @@ public class ImageFileFactory {
     public ImageFileFactory(String imgPath) {
         initialize(imgPath);
         this.dataset = gdal.Open(imgPath, gdalconstConstants.GA_Update);
+    }
+    public ImageFileFactory(String imgPath,boolean readonly) {
+        initialize(imgPath);
+        this.dataset = gdal.Open(imgPath, readonly?gdalconstConstants.GA_ReadOnly:gdalconstConstants.GA_Update);
+    }
+
+    public void setSpatialReference(SpatialReference srs){
+        this.dataset.SetSpatialRef(srs);
+    }
+
+    public void setGeoTransform(double[] geoTransform){
+        this.dataset.SetGeoTransform(geoTransform);
+    }
+
+    public String polygonize(int bandIndex) {
+        String targetPath = this.imgPath.substring(0, this.imgPath.lastIndexOf(".")) + ".shp";
+        Band band = this.dataset.GetRasterBand(bandIndex);
+        SpatialReference srs = this.dataset.GetSpatialRef();
+        ogr.RegisterAll();
+        DataSource shpDs = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(targetPath);
+        Layer layer = shpDs.CreateLayer("mask", srs, ogr.wkbPolygon);
+        FieldDefn valField = new FieldDefn("val",ogr.OFTInteger);
+        layer.CreateField(valField);
+        gdal.FPolygonize(band,null,layer,0);
+        shpDs.SyncToDisk();
+        shpDs = null;
+        return targetPath;
+    }
+
+    public void RGB(int[] rgb, String targetPath) {
+        Vector<String> options = new Vector<>();
+        options.add("-ot");
+        options.add("Byte");
+        options.add("-of");
+        options.add("PNG");
+        options.add("-b");
+        options.add(String.valueOf(rgb[0]));
+        options.add("-b");
+        options.add(String.valueOf(rgb[1]));
+        options.add("-b");
+        options.add(String.valueOf(rgb[2]));
+        options.add("-scale");
+        TranslateOptions translateOptions = new TranslateOptions(options);
+        gdal.Translate(targetPath, dataset, translateOptions);
+        logger.info(targetPath + "\"************************************* Translate DONE *************************************\"");
+    }
+
+    public void Binary(int band, String targetPath) {
+        Vector<String> options = new Vector<>();
+        options.add("-ot");
+        options.add("Byte");
+        options.add("-of");
+        options.add("PNG");
+        options.add("-b");
+        options.add(String.valueOf(band));
+        options.add("-scale");
+        options.add("0");
+        options.add("0");
+        options.add("1");
+        options.add("0");
+        TranslateOptions translateOptions = new TranslateOptions(options);
+        gdal.Translate(targetPath, dataset, translateOptions);
+        logger.info(targetPath + "\"************************************* Translate DONE *************************************\"");
     }
 
     public String reFormate(String targetType) {
@@ -224,6 +291,10 @@ public class ImageFileFactory {
         return new int[]{this.dataset.GetRasterXSize(), this.dataset.GetRasterYSize()};
     }
 
+    public double[] getGeoTransform() {
+        return this.dataset.GetGeoTransform();
+    }
+
     /***
      * 影像转换为csv
      * lon,lat,b1...bn
@@ -231,7 +302,7 @@ public class ImageFileFactory {
     public void convert2CSV(String csvPath) {
         int BATCHSIZE = 100000;
         int count = 0;
-        ConsoleProgressBar cpb = new ConsoleProgressBar("Data EX", (long) (dataset.GetRasterYSize() - 1) * (dataset.GetRasterYSize() - 1), '#');
+        ConsoleProgressBar cpb = new ConsoleProgressBar("Data EX", (long) (dataset.GetRasterXSize() - 1) * (dataset.GetRasterYSize() - 1), '#');
         long total = 0;
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(csvPath))) {
             for (int row = 0; row < this.dataset.GetRasterYSize(); row++) {
@@ -245,6 +316,37 @@ public class ImageFileFactory {
                         this.dataset.GetRasterBand(bandIndex).ReadRaster(col, row, 1, 1, val);
                         sbr.append(",").append(val[0]);
                     }
+                    bufferedWriter.write(sbr.toString());
+                    bufferedWriter.newLine();
+                    count++;
+                    if (count > BATCHSIZE) {
+                        count = 0;
+                        bufferedWriter.flush();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("文件异常：" + e.getMessage());
+        }
+    }
+    public void convert2CSV_Binary(int bandIndex,String csvPath) {
+        int BATCHSIZE = 100000;
+        int count = 0;
+        ConsoleProgressBar cpb = new ConsoleProgressBar("Data EX", (long) (dataset.GetRasterXSize() - 1) * (dataset.GetRasterYSize() - 1), '#');
+        long total = 0;
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(csvPath))) {
+            for (int row = 0; row < this.dataset.GetRasterYSize(); row++) {
+                for (int col = 0; col < this.dataset.GetRasterXSize(); col++) {
+                    cpb.show(total++);
+                    double[] lonLat = imageXY2Geo(dataset.GetGeoTransform(), row, col);
+                    StringBuilder sbr = new StringBuilder(row + "_" + col);
+                    sbr.append(",").append(lonLat[0]).append(",").append(lonLat[1]);
+                    double[] val = new double[1];
+                    this.dataset.GetRasterBand(bandIndex).ReadRaster(col, row, 1, 1, val);
+                    if(Double.isNaN(val[0]))
+                        sbr.append(",").append("0");
+                    else
+                        sbr.append(",").append("1");
                     bufferedWriter.write(sbr.toString());
                     bufferedWriter.newLine();
                     count++;

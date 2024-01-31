@@ -21,6 +21,7 @@ import zju.gislab.moral.tools.Helper.FileHelper;
 import zju.gislab.moral.tools.Helper.S2Helper;
 import zju.gislab.moral.tools.TXTPreviewer;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,6 +34,62 @@ import javafx.stage.Stage;
 
 public class FunctionTest {
 
+    @Test
+    public void test_translateMaskCsv(){
+        String sourcePath = "C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_Mask_data\\fine_tune_Date\\russia\\segment";
+        List<File> pngs = FileHelper.getFileListDeep(sourcePath,".png");
+        for(File png : pngs){
+            String targetPath = png.getAbsolutePath().replace(".png",".csv");
+            ImageFileFactory imf = new ImageFileFactory(png.getAbsolutePath(),true);
+            imf.convert2CSV_Binary(1,targetPath);
+            imf.close();
+        }
+    }
+
+    @Test
+    public void test_Translate2RGB() throws IOException {
+        int[] rgb = {4,3,2};
+        List<File> imgs = FileHelper.getFileListDeep("C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_Mask_data\\fine_tune_Date\\russia\\source",".TIF");
+        for(File img : imgs){
+            ImageFileFactory imf = new ImageFileFactory(img.getAbsolutePath());
+            imf.RGB(rgb,img.getAbsolutePath().replace(".TIF",".png"));
+            imf.close();
+        }
+    }
+
+    @Test
+    public void test_Translate2Binary() throws IOException {
+        List<File> imgs = FileHelper.getFileListDeep("C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_Mask_data\\fine_tune_Date\\russia\\segment",".tif");
+        for(File img : imgs){
+            ImageFileFactory imf = new ImageFileFactory(img.getAbsolutePath());
+            imf.Binary(1,img.getAbsolutePath().replace(".tif",".png"));
+            imf.close();
+        }
+    }
+
+    @Test
+    public void test_CreateMask() throws IOException {
+        List<File> imgs = FileHelper.getFileListDeep("C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_Mask_data\\fine_tune_Date\\russia",".TIF");
+        for(File img : imgs){
+            ShapeFileFactory mask = new ShapeFileFactory();
+            mask.createFromIMG(img.getAbsolutePath());
+            System.out.println(mask.getFilePath()+"**************************DONE");
+            mask.close();
+        }
+        System.out.println("**************************DONE**************************");
+    }
+
+    @Test
+    public void test_Polygonize(){
+        String sourceMask ="C:\\Users\\moral\\Downloads\\demo_out.tif";
+        ImageFileFactory img = new ImageFileFactory(sourceMask);
+        String sourceIMG = "C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\Extract_S2_R2.tif";
+        ImageFileFactory sourceImgTrans = new ImageFileFactory(sourceIMG);
+        img.setGeoTransform(sourceImgTrans.getGeoTransform());
+        img.setSpatialReference(sourceImgTrans.getSRS());
+        img.polygonize(1);
+        img.close();
+    }
     @Test
     public void testBandStat(){
         String cpcRoot ="C:\\Users\\moral\\Desktop\\Global Cropland\\_moral_zhijiang\\CPCL_500m\\";
