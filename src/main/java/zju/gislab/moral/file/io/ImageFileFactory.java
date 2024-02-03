@@ -262,6 +262,25 @@ public class ImageFileFactory {
         logger.info(targetPath + "\"************************************* CUT DONE *\"");
     }
 
+    public void clipByMask_ts(String targetPath, String maskPath,int[] ts) {
+        Vector<String> options = new Vector<>();
+        //todo rpc transfer
+//        options.add("-rpc");
+//        options.add("-to");
+//        options.add("DST_METHOD=RPC");
+        options.add("-cutline");
+        options.add(maskPath);
+        options.add("-crop_to_cutline");
+        options.add("true");
+        options.add("-ts");
+        options.add(String.valueOf(ts[0]));
+        options.add(String.valueOf(ts[1]));
+        WarpOptions warpOptions = new WarpOptions(options);
+        Dataset[] src_array = {dataset};
+        gdal.Warp(targetPath, src_array, warpOptions);
+        logger.info(targetPath + "\"************************************* CUT DONE *\"");
+    }
+
     /***
      *
      * @param targetPath
