@@ -8,6 +8,7 @@ import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.ogr.DataSource;
 import org.gdal.ogr.ogr;
+import org.gdal.osr.SpatialReference;
 import org.junit.Test;
 import zju.gislab.moral.converts.DateConverter;
 import zju.gislab.moral.enity.Feature;
@@ -36,6 +37,27 @@ import javafx.stage.Stage;
 import javax.swing.*;
 
 public class FunctionTest {
+    @Test
+    public void test_convert2csv(){
+
+        String cpField = "C:\\Users\\moral\\Desktop\\博士论文\\第一章实验\\cdl_2019_tkss_clip_00.tif";
+        String S2 = "C:\\Users\\moral\\Desktop\\博士论文\\第一章实验\\S2_Tkss_2019-0000000000-0000000000.tif";
+
+        ImageFileFactory s2Imf = new ImageFileFactory(S2);
+        ImageFileFactory cpImg = new ImageFileFactory(cpField);
+        SpatialReference s2SRS = s2Imf.getSRS();
+        SpatialReference cpSRS = cpImg.getSRS();
+        int[] size_S2 =s2Imf.getImageSize();
+        int[] size_CDL =cpImg.getImageSize();
+        System.out.println("S2: " + s2SRS.GetName()+"-"+size_S2[0]+"x"+size_S2[1]);
+        System.out.println("CDL: " + cpSRS.GetName()+"-"+size_CDL[0]+"x"+size_CDL[1]);
+
+        String csvPath = "C:\\Users\\moral\\Desktop\\博士论文\\第一章实验\\" + cpImg.getImgName().replace(".tif", ".csv");
+        s2Imf.convert2CSVWithCDL(csvPath, cpField);
+        s2Imf.close();
+
+    }
+
 
     @Test
     public void test_pickByXY() {
