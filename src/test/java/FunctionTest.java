@@ -17,12 +17,14 @@ import zju.gislab.moral.file.io.ImageFileFactory;
 import zju.gislab.moral.file.io.ShapeFileFactory;
 import zju.gislab.moral.file.io.SystemFileFactory;
 import zju.gislab.moral.file.operation.FileOperation;
+import zju.gislab.moral.tools.ConsoleProgressBar;
 import zju.gislab.moral.tools.Helper.CdlHelper;
 import zju.gislab.moral.tools.Helper.FileHelper;
 import zju.gislab.moral.tools.Helper.S2Helper;
 import zju.gislab.moral.tools.TXTPreviewer;
 
 import java.awt.*;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,7 +40,84 @@ import javax.swing.*;
 
 public class FunctionTest {
     @Test
-    public void test_convert2csv(){
+    public void test_mask_GroundTruth() {
+        String root = "C:\\Users\\moral\\Desktop\\博士论文\\第三章\\4test\\Russia_2020_34_R3";
+        String truth = root + "\\ground_truth.tif";
+        String mineProb = root + "\\Mine_Prob.tif";
+        String mineMask = root + "\\Mine_Mask.tif";
+        String samProb = root + "\\SAM_Prob.tif";
+        String samMask = root + "\\SAM_Mask.tif";
+        String resultCsv = root + ".csv";
+
+        ImageFileFactory truth_imf = new ImageFileFactory(truth);
+        ImageFileFactory mineProb_imf = new ImageFileFactory(mineProb);
+        ImageFileFactory mineMask_imf = new ImageFileFactory(mineMask);
+        ImageFileFactory samProb_imf = new ImageFileFactory(samProb);
+        ImageFileFactory samMask_imf = new ImageFileFactory(samMask);
+
+        int[] size_truth = truth_imf.getImageSize();
+        int[] size_mineProb = mineProb_imf.getImageSize();
+        int[] size_mineMask = mineMask_imf.getImageSize();
+        int[] size_samProb = samProb_imf.getImageSize();
+        int[] size_samMask = samMask_imf.getImageSize();
+
+        System.out.println("truth: " + size_truth[0] + "x" + size_truth[1]);
+        System.out.println("mineProb: " + size_mineProb[0] + "x" + size_mineProb[1]);
+        System.out.println("mineMask: " + size_mineMask[0] + "x" + size_mineMask[1]);
+        System.out.println("samProb: " + size_samProb[0] + "x" + size_samProb[1]);
+        System.out.println("samMask: " + size_samMask[0] + "x" + size_samMask[1]);
+        int BATCHSIZE = 10000;
+        int count = 0;
+        ConsoleProgressBar cpb = new ConsoleProgressBar("Data EX", (long) (size_truth[0] - 1) * (size_truth[1] - 1), '#');
+        long total = 0;
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(resultCsv))) {
+            bufferedWriter.write("label,mine_score,mine_mask,sam_score,sam_mask");
+            bufferedWriter.newLine();
+            for (int row = 0; row < size_truth[1]; row++) {
+                for (int col = 0; col < size_truth[0]; col++) {
+                    total++;
+                    double[] truthVal = new double[1];
+                    truth_imf.getValueByRowCol(1, row, col, truthVal);
+
+                    double[] mineVal = new double[1];
+                    mineProb_imf.getValueByRowCol(1, row, col, mineVal);
+
+                    double[] mineMaskVal = new double[1];
+                    mineMask_imf.getValueByRowCol(1, row, col, mineMaskVal);
+
+                    double[] samVal = new double[1];
+                    samProb_imf.getValueByRowCol(1, row, col, samVal);
+
+                    double[] samMaskVal = new double[1];
+                    samMask_imf.getValueByRowCol(1, row, col, samMaskVal);
+
+                    if (!Double.isNaN(truthVal[0]) & !Double.isNaN(mineVal[0]) & !Double.isNaN(samVal[0])) {
+                        bufferedWriter.write(truthVal[0] > 0 ? "1," : "0,");
+                        bufferedWriter.write(mineVal[0] + "," + mineMaskVal[0] + "," + samVal[0] + "," + samMaskVal[0]);
+                        bufferedWriter.newLine();
+                    }
+                    count++;
+                    if (count > BATCHSIZE) {
+                        cpb.show(total);
+                        count = 0;
+                        bufferedWriter.flush();
+                    }
+                }
+            }
+            cpb.show(total);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            truth_imf.close();
+            mineProb_imf.close();
+            samProb_imf.close();
+            samMask_imf.close();
+        }
+
+    }
+
+    @Test
+    public void test_convert2CSVWithCDL() {
 
         String cpField = "C:\\Users\\moral\\Desktop\\博士论文\\第一章实验\\cdl_2019_tkss_clip_00.tif";
         String S2 = "C:\\Users\\moral\\Desktop\\博士论文\\第一章实验\\S2_Tkss_2019-0000000000-0000000000.tif";
@@ -47,13 +126,29 @@ public class FunctionTest {
         ImageFileFactory cpImg = new ImageFileFactory(cpField);
         SpatialReference s2SRS = s2Imf.getSRS();
         SpatialReference cpSRS = cpImg.getSRS();
-        int[] size_S2 =s2Imf.getImageSize();
-        int[] size_CDL =cpImg.getImageSize();
-        System.out.println("S2: " + s2SRS.GetName()+"-"+size_S2[0]+"x"+size_S2[1]);
-        System.out.println("CDL: " + cpSRS.GetName()+"-"+size_CDL[0]+"x"+size_CDL[1]);
+        int[] size_S2 = s2Imf.getImageSize();
+        int[] size_CDL = cpImg.getImageSize();
+        System.out.println("S2: " + s2SRS.GetName() + "-" + size_S2[0] + "x" + size_S2[1]);
+        System.out.println("CDL: " + cpSRS.GetName() + "-" + size_CDL[0] + "x" + size_CDL[1]);
 
         String csvPath = "C:\\Users\\moral\\Desktop\\博士论文\\第一章实验\\" + cpImg.getImgName().replace(".tif", ".csv");
         s2Imf.convert2CSVWithCDL(csvPath, cpField);
+        s2Imf.close();
+
+    }
+
+    @Test
+    public void test_convert2csv() {
+
+        String S2 = "C:\\Users\\moral\\Desktop\\博士论文\\第四章\\__Ukraine_S2\\S2_Ukraine_2023_456_R2.tif";
+        String csvPath = S2.replace(".tif", ".csv");
+
+        ImageFileFactory s2Imf = new ImageFileFactory(S2);
+        SpatialReference s2SRS = s2Imf.getSRS();
+        int[] size_S2 = s2Imf.getImageSize();
+        System.out.println("S2: " + s2SRS.GetName() + "-" + size_S2[0] + "x" + size_S2[1]);
+
+        s2Imf.convert2CSV(csvPath);
         s2Imf.close();
 
     }
@@ -85,6 +180,7 @@ public class FunctionTest {
             imf.close();
         }
     }
+
     @Test
     public void test_cutByMask() {
         String sourceImg = "C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_fine_tune\\tmp\\boundary_buf_bin.tif";
@@ -95,19 +191,20 @@ public class FunctionTest {
         List<File> extents = FileHelper.getFileListDeep(sourcePath, ".shp");
         for (File extent : extents) {
             String targetMask = sourceRoot + extent.getName().replace(".shp", ".tif");
-            imf.clipByMask_ts(targetMask, extent.getAbsolutePath(),tr);
+            imf.clipByMask_ts(targetMask, extent.getAbsolutePath(), tr);
         }
         imf.close();
     }
+
     @Test
     public void test_Translate2RGB() throws IOException {
-        String sourcePath = "C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_fine_tune\\test";
-        String targetRoot = "C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\SAM_fine_tune\\test_source\\";
+        String sourcePath = "C:\\Users\\moral\\Desktop\\Global-Cropland\\demo\\sma\\source";
+        String targetRoot = "C:\\Users\\moral\\Desktop\\Global-Cropland\\demo\\sma\\target\\";
         int[] rgb = {4, 3, 2};
-        List<File> imgs = FileHelper.getFileListDeep(sourcePath, ".TIF");
+        List<File> imgs = FileHelper.getFileListDeep(sourcePath, ".tif");
         for (File img : imgs) {
             ImageFileFactory imf = new ImageFileFactory(img.getAbsolutePath());
-            imf.RGB(rgb, targetRoot+img.getName().replace(".TIF", ".tif"));
+            imf.RGB(rgb, targetRoot + img.getName());
             imf.close();
         }
     }
@@ -136,13 +233,24 @@ public class FunctionTest {
 
     @Test
     public void test_Polygonize() {
-        String sourceMask = "C:\\Users\\moral\\Downloads\\demo_out.tif";
+        String sourceMask = "C:\\Users\\moral\\Desktop\\博士论文\\第四章\\tk00\\Mine_Mask_S2_2019_Tkss_00_RGB_95.tif";
         ImageFileFactory img = new ImageFileFactory(sourceMask);
-        String sourceIMG = "C:\\Users\\moral\\Desktop\\Global-Cropland\\_moral_zhijiang\\Extract_S2_R2.tif";
+        String sourceIMG = "C:\\Users\\moral\\Desktop\\博士论文\\第四章\\tk00\\S2_2019_Tkss_00_RGB.tif";
         ImageFileFactory sourceImgTrans = new ImageFileFactory(sourceIMG);
         img.setGeoTransform(sourceImgTrans.getGeoTransform());
         img.setSpatialReference(sourceImgTrans.getSRS());
         img.polygonize(1);
+        img.close();
+    }
+
+    @Test
+    public void test_SetSpatial() {
+        String sourceMask = "C:\\Users\\moral\\Desktop\\博士论文\\第四章\\__tk00\\BS_Mine_Bin.tif";
+        ImageFileFactory img = new ImageFileFactory(sourceMask);
+        String sourceIMG = "C:\\Users\\moral\\Desktop\\博士论文\\第四章\\__tk00\\S2_2019_Tkss_00_RGB.tif";
+        ImageFileFactory sourceImgTrans = new ImageFileFactory(sourceIMG);
+        img.setGeoTransform(sourceImgTrans.getGeoTransform());
+        img.setSpatialReference(sourceImgTrans.getSRS());
         img.close();
     }
 
@@ -219,8 +327,6 @@ public class FunctionTest {
         ShapeFileFactory sff = new ShapeFileFactory("C:\\Users\\moral\\Desktop\\Global Cropland\\_moral_zhijiang\\mask2.shp", re, imf.getSRS());
         sff.close();
     }
-
-
 
 
     @Test

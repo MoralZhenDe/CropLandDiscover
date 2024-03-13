@@ -204,7 +204,7 @@ public class ImageFileFactory {
      */
     public boolean getValueByRowCol(int bandIndex, int row, int col, double[] val) {
         Band band = this.dataset.GetRasterBand(bandIndex);
-        if (row > 0 & col > 0 & row < dataset.GetRasterXSize() & col < dataset.GetRasterYSize()) {
+        if (row > 0 & col > 0 & row < dataset.GetRasterYSize() & col < dataset.GetRasterXSize()) {
             band.ReadRaster(row, col, 1, 1, val);
             return true;
         } else {
@@ -326,7 +326,7 @@ public class ImageFileFactory {
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(csvPath))) {
             for (int row = 0; row < this.dataset.GetRasterYSize(); row++) {
                 for (int col = 0; col < this.dataset.GetRasterXSize(); col++) {
-                    cpb.show(total++);
+                    total++;
                     double[] lonLat = imageXY2Geo(dataset.GetGeoTransform(), row, col);
                     StringBuilder sbr = new StringBuilder(row + "_" + col);
                     sbr.append(",").append(lonLat[0]).append(",").append(lonLat[1]);
@@ -341,6 +341,7 @@ public class ImageFileFactory {
                     if (count > BATCHSIZE) {
                         count = 0;
                         bufferedWriter.flush();
+                        cpb.show(total);
                     }
                 }
             }
@@ -356,7 +357,7 @@ public class ImageFileFactory {
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(csvPath))) {
             for (int row = 0; row < this.dataset.GetRasterYSize(); row++) {
                 for (int col = 0; col < this.dataset.GetRasterXSize(); col++) {
-                    cpb.show(total++);
+                    total++;
                     double[] lonLat = imageXY2Geo(dataset.GetGeoTransform(), row, col);
                     StringBuilder sbr = new StringBuilder(row + "_" + col);
                     sbr.append(",").append(lonLat[0]).append(",").append(lonLat[1]);
@@ -372,6 +373,7 @@ public class ImageFileFactory {
                     if (count > BATCHSIZE) {
                         count = 0;
                         bufferedWriter.flush();
+                        cpb.show(total);
                     }
                 }
             }
